@@ -209,7 +209,7 @@ def load_data_and_convert_to_grid(datadicts, ratio, data_dir="processed_data", l
 # %%
 def get_grid_current_data_with_label_from_keyword(keyword,label=0):
     
-    filelist = []
+    filelist = []                                  
     for root,_,fileL in os.walk("raw_data"):
         for eachfile in fileL:
             if eachfile.endswith(".csv") and (eachfile.startswith(str(label)) or eachfile.count(keyword)):
@@ -224,18 +224,65 @@ def get_grid_current_data_with_label_from_keyword(keyword,label=0):
         df = df.values[:,1:]
         return df
 
+import seaborn as sns
+from matplotlib import pyplot as plt
+from scipy.special import softmax
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
+
+def evaluate_metrics(y_true, y_pred, csv_path, num_epoch):
+    sns.set_theme(color_codes=True)
+
+    # 计算各项评估指标
+    acc = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred, average='weighted')
+    recall = recall_score(y_true, y_pred, average='weighted')
+    f1 = f1_score(y_true, y_pred, average='weighted')
+    print(f'[Info] acc: {acc}, precision: {precision}, recall: {recall}, f1: {f1}')
+
+    data = pd.DataFrame(np.array([acc, precision, recall, f1]).reshape(1, -1))
+    # 混淆矩阵
+    cf_matrix = confusion_matrix(y_true, y_pred)
+    print(cf_matrix)
+
+    # Flatten confusion matrix for CSV
+    cf_matrix_flat = pd.DataFrame(cf_matrix)
+    
+    # Write metrics and confusion matrix data to CSV
+    with open(csv_path, 'a') as file:
+        file.write(f"___Epoch___{num_epoch}:\n")
+        data.to_csv(file, header=False, index=False)
+        cf_matrix_flat.to_csv(file, header=False, index=False)
+    
+    return acc
 
 
 if __name__ == "__main__":
+    keywordList = ["N15_M07_F04_"]
+    keywordList = ["N09_M07_F10_" ,"N15_M07_F10_","N15_M01_F10_"]
+    dicts = {"K001":0,"K002":0,'K003':0,"K004":0,"K005":0,
+             "KA04":1,"KA15":1,"KA16":1,"KA22":1,"KA30":1,
+             "KI04":2,"KI14":2,"KI16":2,"KI18":2,"KI21":2}
+    # dicts = {"KI04":2,"KI14":2,"KI16":2,"KI18":2,"KI21":2}
+    
+    # for eachbt in dicts:
+    #     for eachcondi in keywordList:
+    #         print(f"\"{eachcondi + eachbt}\": {dicts[eachbt]}," ,end = '')
+
+    folderName = "G_lp_td_fd_pixel"
+
+    datadicts = {"N15_M01_F10_K001":0,"N15_M07_F10_K001": 0}
+    for each in datadicts:
+        get_data_and_convert_to_pixels(each,datadicts[each],6400,6400,128000,output_dir=folderName)
+    # for eachbt in dicts:
+    #     for eachcondi in keywordList:
+    #         get_data_and_convert_to_pixels(eachcondi + eachbt,dicts[eachbt],6400,6400,128000,output_dir=folderName)
+
 
     # %%
-    get_data_and_convert_to_pixels("KA04",1,6400,6400,128000,output_dir="G_lp_td_fd_pixel")
+    # x1,y1,x2,y2 = load_data_and_convert_to_grid({"K004":1},0.9,"G_lp_td_fd_pixel",6401+2500)
 
-    # %%
-    x1,y1,x2,y2 = load_data_and_convert_to_grid({"K004":1},0.9,"G_lp_td_fd_pixel",6401+2500)
-
-    good = load_mat_to_two_current_filtered(R"raw_data\K001\K001\N09_M07_F10_K001_1.mat")
-    good = good[0,:]
-    bad = load_mat_to_two_current_filtered(R"raw_data\KA04\KA04\N09_M07_F10_KA04_1.mat")
-    bad = bad[0,:]
+    # good = load_mat_to_two_current_filtered(R"raw_data\K001\K001\N09_M07_F10_K001_1.mat")
+    # good = good[0,:]
+    # bad = load_mat_to_two_current_filtered(R"raw_data\KA04\KA04\N09_M07_F10_KA04_1.mat")
+    # bad = bad[0,:]
 
